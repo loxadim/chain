@@ -5,6 +5,10 @@ import (
 	"chain/protocol/bc"
 )
 
+func init() {
+	bc.TxHashesFunc = TxHashes
+}
+
 // TxHashes returns all hashes needed for validation and state updates.
 func TxHashes(oldTx *bc.TxData) (hashes *bc.TxHashes, err error) {
 	txid, header, entries, err := mapTx(oldTx)
@@ -24,6 +28,9 @@ func TxHashes(oldTx *bc.TxData) (hashes *bc.TxHashes, err error) {
 	}
 
 	var txRefDataHash bc.Hash // xxx calculate this for the tx
+
+	// xxx need to build vm contexts in the right order!
+	// entries map iteration order is randomized
 
 	for entryID, ent := range entries {
 		switch ent := ent.(type) {
