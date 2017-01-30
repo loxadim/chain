@@ -29,8 +29,7 @@ func TxHashes(oldTx *bc.TxData) (hashes *bc.TxHashes, err error) {
 
 	var txRefDataHash bc.Hash // xxx calculate this for the tx
 
-	// xxx need to build vm contexts in the right order!
-	// entries map iteration order is randomized
+	hashes.VMContexts = make([]*bc.VMContext, len(oldTx.Inputs))
 
 	for entryID, ent := range entries {
 		switch ent := ent.(type) {
@@ -48,13 +47,13 @@ func TxHashes(oldTx *bc.TxData) (hashes *bc.TxHashes, err error) {
 			vmc := newVMContext(bc.Hash(entryID), hashes.ID, txRefDataHash)
 			vmc.RefDataHash = bc.Hash(ent.body.Data) // xxx should this be the id of the data entry? or the hash of the data that's _in_ the data entry?
 			vmc.NonceID = (*bc.Hash)(&ent.body.Anchor)
-			hashes.VMContexts = append(hashes.VMContexts, vmc)
+			hashes.VMContexts[ent.Ordinal()] = vmc
 
 		case *spend:
 			vmc := newVMContext(bc.Hash(entryID), hashes.ID, txRefDataHash)
 			vmc.RefDataHash = bc.Hash(ent.body.Data)
 			vmc.OutputID = (*bc.Hash)(&ent.body.SpentOutput)
-			hashes.VMContexts = append(hashes.VMContexts, vmc)
+			hashes.VMContexts[ent.Ordinal()] = vmc
 		}
 	}
 
