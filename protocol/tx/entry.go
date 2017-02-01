@@ -55,28 +55,28 @@ func writeForHash(w io.Writer, c interface{}) error {
 	switch v := c.(type) {
 	case byte:
 		_, err := w.Write([]byte{v})
-		return err
+		return errors.Wrap(err, "writing byte for hash")
 	case bc.Hash:
 		_, err := w.Write(v[:])
-		return err
+		return errors.Wrap(err, "writing bc.Hash for hash")
 	case entryRef: // xxx do we need so many [32]byte types?
 		_, err := w.Write(v[:])
-		return err
+		return errors.Wrap(err, "writing entryRef for hash")
 	case extHash: // xxx do we need so many [32]byte types?
 		_, err := w.Write(v[:])
-		return err
+		return errors.Wrap(err, "writing extHash for hash")
 	case bc.AssetID: // xxx do we need so many [32]byte types?
 		_, err := w.Write(v[:])
-		return err
+		return errors.Wrap(err, "writing bc.AssetID for hash")
 	case uint64:
 		_, err := blockchain.WriteVarint63(w, v)
-		return err
+		return errors.Wrapf(err, "writing uint64 (%d) for hash", v)
 	case []byte:
 		_, err := blockchain.WriteVarstr31(w, v)
-		return err
+		return errors.Wrapf(err, "writing []byte (len %d) for hash", len(v))
 	case string:
 		_, err := blockchain.WriteVarstr31(w, []byte(v))
-		return err
+		return errors.Wrapf(err, "writing string (len %d) for hash", len(v))
 	}
 
 	// The two container types in the spec (List and Struct)
@@ -87,7 +87,7 @@ func writeForHash(w io.Writer, c interface{}) error {
 		l := v.Len()
 		_, err := blockchain.WriteVarint31(w, uint64(l))
 		if err != nil {
-			return err
+			return errors.Wrapf(err, "writing slice (len %d) for hash", l)
 		}
 		for i := 0; i < l; i++ {
 			c := v.Index(i)
@@ -96,7 +96,7 @@ func writeForHash(w io.Writer, c interface{}) error {
 			}
 			err := writeForHash(w, c.Interface())
 			if err != nil {
-				return err
+				return errors.Wrapf(err, "writing slice element %d for hash", i)
 			}
 		}
 		return nil
@@ -109,7 +109,9 @@ func writeForHash(w io.Writer, c interface{}) error {
 			}
 			err := writeForHash(w, c.Interface())
 			if err != nil {
-				return err
+				t := v.Type()
+				f := t.Field(i)
+				return errors.Wrapf(err, "writing struct field %d (%s.%s) for hash", i, t.Name(), f.Name)
 			}
 		}
 		return nil

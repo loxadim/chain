@@ -2,6 +2,7 @@ package tx
 
 import (
 	"chain/crypto/sha3pool"
+	"chain/errors"
 	"chain/protocol/bc"
 )
 
@@ -13,7 +14,7 @@ func init() {
 func TxHashes(oldTx *bc.TxData) (hashes *bc.TxHashes, err error) {
 	txid, header, entries, err := mapTx(oldTx)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "mapping old transaction to new")
 	}
 
 	hashes = new(bc.TxHashes)
